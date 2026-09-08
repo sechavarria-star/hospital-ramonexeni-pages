@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Ramón Exeni — Gestión de Turnos</title>
+<link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/sechavarria-star/WEB-DEMO/refs/heads/main/Elefante-original.svg">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:#0f1420;color:#e8ecf3;}
+  /* Login */
+  #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 600px at 50% -10%,#1c2740,#0f1420);}
+  .card{width:min(92vw,380px);background:#151b28;border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:34px 30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .logo{width:56px;height:56px;border-radius:14px;background:#2563eb;display:flex;align-items:center;
+    justify-content:center;font-size:28px;margin:0 auto 16px;}
+  .card h1{font-size:18px;font-weight:600;margin-bottom:4px;}
+  .card p{font-size:13px;color:#93a0b4;margin-bottom:22px;line-height:1.5;}
+  #gbtn{display:flex;justify-content:center;min-height:44px;}
+  .err{color:#f87171;font-size:13px;margin-top:14px;min-height:18px;}
+  .foot{margin-top:22px;font-size:11px;color:#5b6578;}
+  .foot a{color:#93a0b4;text-decoration:none;}
+  /* App */
+  #app{position:fixed;inset:0;border:0;width:100%;height:100%;display:none;background:#f0f2f5;}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="card">
+    <div class="logo">🏥</div>
+    <h1>Gestión de Turnos</h1>
+    <p>Hospital del Niño Ramón Exeni<br>Ingresá con tu cuenta de Google autorizada.</p>
+    <div id="gbtn"></div>
+    <div class="err" id="err"></div>
+    <div class="foot"><a href="https://www.giwa-ia.com" target="_blank">Powered by GIWA {IA}</a></div>
+  </div>
+</div>
+
+<iframe id="app" title="Gestión de Turnos"></iframe>
+
+<script>
+  // OAuth Client ID (GIS) del subdominio — reemplazar por el real cuando esté creado.
+  var CLIENT_ID = '__PENDIENTE__.apps.googleusercontent.com';
+  // Deployment estable del backoffice WA (/exec, con ALLOWALL).
+  var APP_EXEC  = 'https://script.google.com/macros/s/AKfycbx2KyXz_U-i8HqBeAQXHHYTTuJ7YpuzpJNNusT1HDDNqlnbyBe-k-2oMyZduByFOh-MMA/exec';
+
+  function onCredential(resp) {
+    var jwt = resp && resp.credential;
+    if (!jwt) { document.getElementById('err').textContent = 'No se recibió el token de Google.'; return; }
+    // Pasa el ID token al backoffice; él valida contra su lista de usuarios.
+    document.getElementById('app').src = APP_EXEC + '?t=' + encodeURIComponent(jwt);
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  window.onload = function () {
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      // el script de GIS puede tardar; reintentar
+      var tries = 0, iv = setInterval(function () {
+        if (window.google && google.accounts && google.accounts.id) { clearInterval(iv); init(); }
+        else if (++tries > 40) { clearInterval(iv); document.getElementById('err').textContent = 'No cargó Google Sign-In. Recargá la página.'; }
+      }, 150);
+    } else { init(); }
+  };
+
+  function init() {
+    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential, auto_select: true });
+    google.accounts.id.renderButton(document.getElementById('gbtn'),
+      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'center' });
+    google.accounts.id.prompt(); // One Tap si ya hay sesión
+  }
+</script>
+</body>
+</html>
