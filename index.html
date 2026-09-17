@@ -69,10 +69,16 @@
   };
 
   function init() {
-    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential, auto_select: true });
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: onCredential,
+      auto_select: false,      // sin auto-login (evita el FedCM AbortError)
+      itp_support: true,       // mejora Safari / ITP
+      cancel_on_tap_outside: false
+    });
     google.accounts.id.renderButton(document.getElementById('gbtn'),
       { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', logo_alignment: 'center' });
-    google.accounts.id.prompt(); // One Tap si ya hay sesión
+    // Sin One Tap prompt(): en incógnito/Safari FedCM lo aborta. El usuario entra con el botón.
   }
 </script>
 </body>
