@@ -113,11 +113,19 @@ Código: `backend/backoffice/` (cuando se suba a este repo).
 La web app es pública, y en Apps Script **cualquier función que no termine en `_` se puede llamar desde
 el navegador**. Por eso:
 
-1. Toda función sin `_` empieza con `_exigirUsuario_(sid);` y recibe `sid` como último parámetro.
+1. Toda función sin `_` recibe `sid` como último parámetro y empieza con un control:
+   - `_exigirAdmin_(sid);` — sólo usuarios con rol **admin**. Es el **default** para cualquier función.
+   - `_exigirUsuario_(sid);` — cualquier usuario activo, también **recepción**. Sólo para lo que usa
+     recepción, que ve únicamente el kanban de Estados: leer la agenda y cambiar el estado de un turno.
+   Una función nueva va con `_exigirAdmin_`, salvo que recepción la necesite; en ese caso se agrega
+   también a la lista `ABIERTAS` de `test/test_auth.js`.
 2. El acceso a la base (`sbGet_`, `sbPost_`, `sbPatch_`, `sbDelete_`, `sbRpc_`) y todos los helpers
    terminan en `_`.
 3. Toda llamada del front manda `window.__SID__` como último argumento.
-4. Antes de publicar: `node test/test_auth.js .` tiene que dar `TODO OK`.
+4. Antes de publicar: `node test/test_auth.js .` tiene que dar `TODO OK` (prueba sin sesión, usuario
+   ajeno, admin y recepción).
+
+El rol se cachea 5 minutos: dar de baja a alguien o cambiarle el rol tarda hasta 5 minutos en aplicarse.
 
 Las credenciales de Supabase se leen de las **Propiedades del script**, nunca del código.
 
@@ -178,10 +186,16 @@ El sistema maneja datos de **menores** (nombre, DNI, fecha de nacimiento, contac
 
 ## 10. Pendientes conocidos
 
-- **Roles en el servidor:** se exige un usuario activo, pero no se valida el rol; lo que es sólo de
-  administración se oculta en la pantalla.
-- **Telegram en el backoffice:** el backend ya lo soporta, pero la pantalla todavía asume WhatsApp
-  (contadores y filtro de origen, canal del turno, contacto según canal, motivo de cancelación por
-  Telegram, y la bandeja de Handoff, que debería usar el `canal`).
-- El front llama a `dispararFlujoN8n`, que no existe en el servidor.
+- **Telegram en el backoffice:** ya están el contador y el filtro de origen, los colores por origen y
+  el contacto "Tg: / Ws:" en Handoff. Falta: el canal de cada turno, el contacto según canal en Turnos
+  y en la agenda impresa, el motivo de cancelación por Telegram, y en Handoff el encabezado del chat y
+  no mostrar "Ventana 24h" en chats de Telegram.
+- **Licencias de último momento:** al guardar una licencia, el front llama a `dispararFlujoN8n`, que
+  no existe en el servidor de la v2. Confirmar con quien mantiene el agente qué cancela y avisa los
+  turnos afectados.
+
+### Decisiones tomadas
+
+- Handoff: en el hilo se muestra "Operador", no el nombre de quien respondió.
+- Handoff: "Devolver al bot" no le avisa al paciente de Telegram.
 - Tokens escritos dentro de algunos workflows de n8n: pasarlos a credenciales y rotarlos.
